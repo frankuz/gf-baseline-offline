@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Small-Farmers Baseline Survey</title>
+    <meta name="description" content="Offline survey tool for field data collection">
+    <meta name="theme-color" content="#0c6f45">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+    
+    <!-- JavaScript Modules -->
+<script type="module" src="modules/app.js"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body x-data="surveyApp">
+    <!-- Loading Screen -->
+    <div x-show="view === 'loading'" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading survey...</p>
+        </div>
+    </div>
+
+    <!-- Home View -->
+    <div x-show="view === 'home'" class="container">
+        <header class="app-header">
+            <h1>Small-Farmers Baseline</h1>
+            <p x-text="surveyData?.description || 'Loading...'"></p>
+        </header>
+
+        <main class="main-content">
+            <div class="stats-card">
+                <div class="stat-number" x-text="responseCount"></div>
+                <div class="stat-label">RESPONSES STORED</div>
+            </div>
+
+            <div class="action-buttons">
+                <button 
+                    x-show="!hasDraft"
+                    @click="startSurvey()"
+                    class="btn btn-primary btn-large">
+                    START SURVEY
+                </button>
+                
+                <button 
+                    x-show="hasDraft"
+                    @click="resumeSurvey()"
+                    class="btn btn-primary btn-large">
+                    RESUME SURVEY
+                </button>
+                
+                <button 
+                    @click="showData()"
+                    class="btn btn-secondary btn-large">
+                    MANAGE DATA
+                </button>
+            </div>
+
+            <div x-show="error" class="error-card">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message" x-text="error"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Survey View -->
+    <div x-show="view === 'survey'" class="container survey-container">
+        <header class="survey-header">
+            <button @click="showHome()" class="btn btn-back">← Back</button>
+            <h2 x-text="surveyData?.title || 'Survey'"></h2>
+        </header>
+
+        <main class="survey-content">
+            <form @submit.prevent="submitSurvey()" id="surveyForm">
+                <div id="questionsContainer">
+                    <!-- Questions will be dynamically rendered here -->
+                </div>
+
+                <div class="survey-actions">
+                    <button type="submit" class="btn btn-primary">
+                        SUBMIT
+                    </button>
+                    <button type="button" @click="discardSurvey()" class="btn btn-danger">
+                        DISCARD SURVEY
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Data View -->
+    <div x-show="view === 'data'" class="container">
+        <header class="data-header">
+            <button @click="showHome()" class="btn btn-back">← Back</button>
+            <h2>Manage Data</h2>
+        </header>
+
+        <main class="data-content">
+            <div class="stats-card">
+                <div class="stat-number" x-text="responseCount"></div>
+                <div class="stat-label">RESPONSES STORED</div>
+            </div>
+
+            <div class="data-actions">
+                <button @click="exportData()" class="btn btn-primary">
+                    EXPORT DATA
+                </button>
+                <button @click="shareData()" class="btn btn-secondary">
+                    SHARE DATA
+                </button>
+                <button @click="confirmDeleteData()" class="btn btn-danger">
+                    DELETE DATA
+                </button>
+            </div>
+
+            <div class="responses-list" id="responsesList">
+                <!-- Responses will be listed here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div x-show="showModal" class="modal-overlay" @click="closeModal()">
+        <div class="modal" @click.stop>
+            <div class="modal-header">
+                <h3 x-text="modalTitle"></h3>
+            </div>
+            <div class="modal-body">
+                <p x-text="modalMessage"></p>
+                <div x-show="modalType === 'delete'" class="delete-confirmation">
+                    <input 
+                        type="text" 
+                        x-model="deleteConfirmation"
+                        placeholder="Type 'delete' to confirm"
+                        class="form-input"
+                        @input.stop>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button @click="closeModal()" class="btn btn-secondary">CANCEL</button>
+                <button 
+                    @click="confirmModal()"
+                    :disabled="modalType === 'delete' && deleteConfirmation !== 'delete'"
+                    class="btn btn-danger">
+                    CONFIRM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div x-show="successMessage" class="success-toast" x-text="successMessage"></div>
+
+</body>
+</html>
